@@ -1,8 +1,8 @@
 # tensor-stack
 
-A teaching project that builds machine learning from scratch, one small step at a time.
+Practicing machine learning algorithms by implementing them from scratch.
 
-It starts with linear regression in plain NumPy: computing predictions, the mean squared error loss, and its gradients by hand.
+So far: linear regression in plain NumPy, computing the loss and its gradients by hand.
 
 ## Run
 
