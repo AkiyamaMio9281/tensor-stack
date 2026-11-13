@@ -24,3 +24,18 @@ db = 2 * np.mean(errors)
 
 print("Weight gradient:", dw)
 print("Bias gradient:", db)
+
+learning_rate = 0.1
+
+w -= learning_rate * dw
+b -= learning_rate * db
+
+# Recompute predictions and loss with the updated parameters.
+y_pred = w * x + b
+errors = y_pred - y
+new_loss = np.mean(errors ** 2)
+
+print(f"Updated weight: {w:.2f}")
+print(f"Updated bias: {b:.2f}")
+print(f"Loss before update: {loss:.2f}")
+print(f"Loss after update: {new_loss:.2f}")
