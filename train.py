@@ -1,41 +1,33 @@
 import numpy as np
 
-# Create five training examples.
 x = np.array([-2, -1, 0, 1, 2], dtype=float)
 y = 3 * x + 2
 
-# Start with a weight and bias of zero.
 w = 0.0
 b = 0.0
-
-# Make predictions and compute the mean squared error.
-y_pred = w * x + b
-errors = y_pred - y
-loss = np.mean(errors ** 2)
-
-print("Actual values:", y)
-print("Predictions:", y_pred)
-print("Loss:", loss)
-
-# Compute the gradients of the loss with respect to w and b.
-# dL/dw = 2 * mean(error * x), dL/db = 2 * mean(error)
-dw = 2 * np.mean(errors * x)
-db = 2 * np.mean(errors)
-
-print("Weight gradient:", dw)
-print("Bias gradient:", db)
-
 learning_rate = 0.1
+num_steps = 50
 
-w -= learning_rate * dw
-b -= learning_rate * db
+for step in range(num_steps):
+    # Compute predictions and loss with the current parameters.
+    y_pred = w * x + b
+    errors = y_pred - y
+    loss = np.mean(errors ** 2)
 
-# Recompute predictions and loss with the updated parameters.
-y_pred = w * x + b
-errors = y_pred - y
-new_loss = np.mean(errors ** 2)
+    if step in (0, 1):
+        print(f"Loss after {step} updates: {loss:.2f}")
 
-print(f"Updated weight: {w:.2f}")
-print(f"Updated bias: {b:.2f}")
-print(f"Loss before update: {loss:.2f}")
-print(f"Loss after update: {new_loss:.2f}")
+    # Compute both gradients before updating either parameter.
+    dw = 2 * np.mean(errors * x)
+    db = 2 * np.mean(errors)
+
+    w -= learning_rate * dw
+    b -= learning_rate * db
+
+# Evaluate the parameters after the last update.
+final_predictions = w * x + b
+final_loss = np.mean((final_predictions - y) ** 2)
+
+print(f"Final weight: {w:.6f}")
+print(f"Final bias: {b:.6f}")
+print(f"Final loss: {final_loss:.2e}")
