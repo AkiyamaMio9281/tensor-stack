@@ -1,4 +1,5 @@
 import numpy as np
+from optim import sgd_step
 
 
 def mlp_forward(x, params):
@@ -112,3 +113,37 @@ for name in check_params:
     )
 
 print("Finite-difference gradient check passed.")
+
+
+rng = np.random.default_rng(42)
+train_params = {
+    "W1": rng.normal(0.0, 0.5, size=(2, 8)),
+    "b1": np.zeros(8),
+    "W2": rng.normal(0.0, 0.5, size=(8, 1)),
+    "b2": np.zeros(1),
+}
+
+learning_rate = 0.1
+num_steps = 2000
+
+for step in range(num_steps):
+    predictions, hidden, hidden_pre_activation = mlp_forward(x, train_params)
+
+    if step in (0, 100, 500):
+        loss = np.mean((predictions - targets) ** 2)
+        print(f"Step {step}: loss = {loss:.6f}")
+
+    grads = mlp_gradients(
+        x, targets, predictions, hidden, hidden_pre_activation, train_params
+    )
+    sgd_step(train_params, grads, learning_rate)
+
+predictions, _, _ = mlp_forward(x, train_params)
+final_loss = np.mean((predictions - targets) ** 2)
+classes = (predictions >= 0.5).astype(int)
+
+print(f"Final loss: {final_loss:.3e}")
+print("Predicted classes:", classes.ravel())
+
+np.testing.assert_array_equal(classes, targets.astype(int))
+assert final_loss < 1e-4

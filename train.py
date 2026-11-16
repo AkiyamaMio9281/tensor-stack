@@ -1,4 +1,5 @@
 import numpy as np
+from optim import sgd_step
 
 
 def predict(x, params):
@@ -15,10 +16,6 @@ def linear_gradients(x, errors):
         "b": 2 * np.mean(errors),
     }
 
-
-def sgd_step(params, grads, learning_rate):
-    for name in params:
-        params[name] -= learning_rate * grads[name]
 
 
 x = np.array([-2, -1, 0, 1, 2], dtype=float)
@@ -44,3 +41,4 @@ final_loss = mse_loss(predict(x, params) - y)
 print(f"Final weight: {params['w']:.6f}")
 print(f"Final bias: {params['b']:.6f}")
 print(f"Final loss: {final_loss:.2e}")
+
