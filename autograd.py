@@ -6,6 +6,7 @@ class Value:
         self._backward = lambda: None
 
     def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data + other.data, (self, other))
 
         def backward():
@@ -16,11 +17,35 @@ class Value:
         return out
 
     def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self, other))
 
         def backward():
             self.grad += other.data * out.grad
             other.grad += self.data * out.grad
+
+        out._backward = backward
+        return out
+
+    __radd__ = __add__
+    __rmul__ = __mul__
+
+    def __neg__(self):
+        return self * -1.0
+
+    def __sub__(self, other):
+        return self + (-other)
+
+    def __rsub__(self, other):
+        return (-self) + other
+
+    def relu(self):
+        active = self.data > 0.0
+        out = Value(max(0.0, self.data), (self,))
+
+        def backward():
+            if active:
+                self.grad += out.grad
 
         out._backward = backward
         return out
@@ -58,3 +83,20 @@ if __name__ == "__main__":
     assert u.grad == 4.0
     assert x.grad == 33.0
     print(f"y = {y.data}, dy/du = {u.grad}, dy/dx = {x.grad}")
+
+    def check_neuron(weight, expected_loss, expected_dw, expected_db):
+        w = Value(weight)
+        b = Value(0.5)
+
+        prediction = (2.0 * w + b).relu()
+        error = prediction - 2.0
+        loss = error * error
+        loss.backward()
+
+        assert loss.data == expected_loss
+        assert w.grad == expected_dw
+        assert b.grad == expected_db
+
+    check_neuron(0.5, 0.25, -2.0, -1.0)
+    check_neuron(-0.5, 4.0, 0.0, 0.0)
+    print("Scalar neuron gradient checks passed.")
