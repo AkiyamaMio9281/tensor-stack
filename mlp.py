@@ -52,6 +52,17 @@ def numerical_gradients(x, targets, params, epsilon=1e-5):
 
     return grads
 
+
+def init_params(seed=42, hidden_size=8):
+    rng = np.random.default_rng(seed)
+    return {
+        "W1": rng.normal(0.0, 0.5, size=(2, hidden_size)),
+        "b1": np.zeros(hidden_size),
+        "W2": rng.normal(0.0, 0.5, size=(hidden_size, 1)),
+        "b2": np.zeros(1),
+    }
+
+
 x = np.array([
     [0.0, 0.0],
     [0.0, 1.0],
@@ -61,89 +72,84 @@ x = np.array([
 
 targets = np.array([[0.0], [1.0], [1.0], [0.0]])
 
-# Use known weights to verify the forward pass.
-params = {
-    "W1": np.array([[1.0, 1.0], [1.0, 1.0]]),
-    "b1": np.array([0.0, -1.0]),
-    "W2": np.array([[1.0], [-2.0]]),
-    "b2": np.array([0.0]),
-}
 
-predictions, _, _ = mlp_forward(x, params)
-loss = np.mean((predictions - targets) ** 2)
+if __name__ == "__main__":
+    # Use known weights to verify the forward pass.
+    params = {
+        "W1": np.array([[1.0, 1.0], [1.0, 1.0]]),
+        "b1": np.array([0.0, -1.0]),
+        "W2": np.array([[1.0], [-2.0]]),
+        "b2": np.array([0.0]),
+    }
 
-print("Predictions:", predictions.ravel())
-print("Loss:", loss)
+    predictions, _, _ = mlp_forward(x, params)
+    loss = np.mean((predictions - targets) ** 2)
 
-np.testing.assert_allclose(predictions, targets)
+    print("Predictions:", predictions.ravel())
+    print("Loss:", loss)
 
-gradient_test_params = {**params, "b2": np.array([0.25])}
-predictions, hidden, hidden_pre_activation = mlp_forward(x, gradient_test_params)
-grads = mlp_gradients(
-    x, targets, predictions, hidden, hidden_pre_activation, gradient_test_params
-)
+    np.testing.assert_allclose(predictions, targets)
 
-np.testing.assert_allclose(grads["W2"], [[0.5], [0.125]])
-np.testing.assert_allclose(grads["b2"], [0.5])
-np.testing.assert_allclose(grads["W1"], [[0.25, -0.25], [0.25, -0.25]])
-np.testing.assert_allclose(grads["b1"], [0.375, -0.25])
-
-print("MLP gradient checks passed.")
-
-check_params = {
-    "W1": np.array([[0.5, -0.4], [0.3, 0.8]]),
-    "b1": np.array([-0.2, 0.1]),
-    "W2": np.array([[0.7], [-1.2]]),
-    "b2": np.array([0.25]),
-}
-
-predictions, hidden, hidden_pre_activation = mlp_forward(x, check_params)
-analytical_grads = mlp_gradients(
-    x, targets, predictions, hidden, hidden_pre_activation, check_params
-)
-numerical_grads = numerical_gradients(x, targets, check_params)
-
-for name in check_params:
-    np.testing.assert_allclose(
-        analytical_grads[name],
-        numerical_grads[name],
-        rtol=1e-5,
-        atol=1e-8,
-        err_msg=f"Gradient check failed for {name}",
-    )
-
-print("Finite-difference gradient check passed.")
-
-
-rng = np.random.default_rng(42)
-train_params = {
-    "W1": rng.normal(0.0, 0.5, size=(2, 8)),
-    "b1": np.zeros(8),
-    "W2": rng.normal(0.0, 0.5, size=(8, 1)),
-    "b2": np.zeros(1),
-}
-
-learning_rate = 0.1
-num_steps = 2000
-
-for step in range(num_steps):
-    predictions, hidden, hidden_pre_activation = mlp_forward(x, train_params)
-
-    if step in (0, 100, 500):
-        loss = np.mean((predictions - targets) ** 2)
-        print(f"Step {step}: loss = {loss:.6f}")
-
+    gradient_test_params = {**params, "b2": np.array([0.25])}
+    predictions, hidden, hidden_pre_activation = mlp_forward(x, gradient_test_params)
     grads = mlp_gradients(
-        x, targets, predictions, hidden, hidden_pre_activation, train_params
+        x, targets, predictions, hidden, hidden_pre_activation, gradient_test_params
     )
-    sgd_step(train_params, grads, learning_rate)
 
-predictions, _, _ = mlp_forward(x, train_params)
-final_loss = np.mean((predictions - targets) ** 2)
-classes = (predictions >= 0.5).astype(int)
+    np.testing.assert_allclose(grads["W2"], [[0.5], [0.125]])
+    np.testing.assert_allclose(grads["b2"], [0.5])
+    np.testing.assert_allclose(grads["W1"], [[0.25, -0.25], [0.25, -0.25]])
+    np.testing.assert_allclose(grads["b1"], [0.375, -0.25])
 
-print(f"Final loss: {final_loss:.3e}")
-print("Predicted classes:", classes.ravel())
+    print("MLP gradient checks passed.")
 
-np.testing.assert_array_equal(classes, targets.astype(int))
-assert final_loss < 1e-4
+    check_params = {
+        "W1": np.array([[0.5, -0.4], [0.3, 0.8]]),
+        "b1": np.array([-0.2, 0.1]),
+        "W2": np.array([[0.7], [-1.2]]),
+        "b2": np.array([0.25]),
+    }
+
+    predictions, hidden, hidden_pre_activation = mlp_forward(x, check_params)
+    analytical_grads = mlp_gradients(
+        x, targets, predictions, hidden, hidden_pre_activation, check_params
+    )
+    numerical_grads = numerical_gradients(x, targets, check_params)
+
+    for name in check_params:
+        np.testing.assert_allclose(
+            analytical_grads[name],
+            numerical_grads[name],
+            rtol=1e-5,
+            atol=1e-8,
+            err_msg=f"Gradient check failed for {name}",
+        )
+
+    print("Finite-difference gradient check passed.")
+
+    train_params = init_params()
+
+    learning_rate = 0.1
+    num_steps = 2000
+
+    for step in range(num_steps):
+        predictions, hidden, hidden_pre_activation = mlp_forward(x, train_params)
+
+        if step in (0, 100, 500):
+            loss = np.mean((predictions - targets) ** 2)
+            print(f"Step {step}: loss = {loss:.6f}")
+
+        grads = mlp_gradients(
+            x, targets, predictions, hidden, hidden_pre_activation, train_params
+        )
+        sgd_step(train_params, grads, learning_rate)
+
+    predictions, _, _ = mlp_forward(x, train_params)
+    final_loss = np.mean((predictions - targets) ** 2)
+    classes = (predictions >= 0.5).astype(int)
+
+    print(f"Final loss: {final_loss:.3e}")
+    print("Predicted classes:", classes.ravel())
+
+    np.testing.assert_array_equal(classes, targets.astype(int))
+    assert final_loss < 1e-4
