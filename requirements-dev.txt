@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest
+# Optional: the PyTorch comparison tests are skipped when torch is not installed.
+# torch
