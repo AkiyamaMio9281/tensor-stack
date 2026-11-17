@@ -140,6 +140,26 @@ class Tensor:
             count = int(np.prod([self.shape[a] for a in axes]))
         return self.sum(axis=axis, keepdims=keepdims) * (1.0 / count)
 
+    # Elementwise functions.
+
+    def exp(self):
+        out = Tensor(np.exp(self.data), (self,))
+
+        def backward():
+            self.grad += out.grad * out.data
+
+        out._backward = backward
+        return out
+
+    def log(self):
+        out = Tensor(np.log(self.data), (self,))
+
+        def backward():
+            self.grad += out.grad / self.data
+
+        out._backward = backward
+        return out
+
     # Activations.
 
     def relu(self):
@@ -148,6 +168,19 @@ class Tensor:
 
         def backward():
             self.grad += out.grad * active
+
+        out._backward = backward
+        return out
+
+    def log_softmax(self, axis=-1):
+        # Subtracting the max leaves log-softmax unchanged but keeps exp() from overflowing.
+        shifted = self.data - self.data.max(axis=axis, keepdims=True)
+        log_normalizer = np.log(np.exp(shifted).sum(axis=axis, keepdims=True))
+        out = Tensor(shifted - log_normalizer, (self,))
+
+        def backward():
+            softmax = np.exp(out.data)
+            self.grad += out.grad - softmax * out.grad.sum(axis=axis, keepdims=True)
 
         out._backward = backward
         return out
